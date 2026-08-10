@@ -1,0 +1,32 @@
+# Same Gateway as gateway.yaml, plus an HTTPS listener that TERMINATES TLS
+# using the eg-tls-cert Secret (a kubernetes.io/tls Secret holding tls.crt +
+# tls.key). Apply this to add :443 on top of the existing :80.
+#   mode: Terminate  -> Envoy decrypts here, forwards plain HTTP to the pod
+#                       (classic SSL offload). mode: Passthrough would instead
+#                       forward the encrypted stream to the backend (TLSRoute).
+# The existing HTTPRoute attaches to both listeners automatically.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: eg-gateway
+  namespace: envoy-gateway-system
+spec:
+  gatewayClassName: eg
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: eg-tls-cert
+        kind: Secret

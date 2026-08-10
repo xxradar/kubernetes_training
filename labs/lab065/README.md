@@ -56,8 +56,9 @@ kubectl get gateway -n envoy-gateway-system
 The `ADDRESS` column shows the external IP (e.g. `172.18.255.200`). If it stays empty, MetalLB isn't handing out an IP, recheck the prerequisite above.
 
 ## 5. Deploy the app and attach a route
-A simple echo app plus its Service, and an **HTTPRoute** that attaches to the Gateway and sends `webapp.local.dev` to the Service:
+Create the app namespace, then a simple echo app plus its Service, and an **HTTPRoute** that attaches to the Gateway and sends `webapp.local.dev` to the Service:
 ```
+kubectl create namespace demo-app
 kubectl apply -f webapp.yaml
 kubectl wait --for=condition=Available deploy/webapp -n demo-app --timeout=90s
 kubectl apply -f httproute.yaml
@@ -73,6 +74,33 @@ curl -H "Host: webapp.local.dev" http://$GW/
 You should get `Hello from Gateway API! Pod: webapp-...`. Repeat and watch the pod name change as it load-balances.
 > On KIND the LB IP lives on the `kind` docker network. If your shell can't reach it directly, run the client on that network: `docker run --rm --network kind curlimages/curl -H "Host: webapp.local.dev" http://$GW/`.
 
+## 7. Add TLS termination (cert + Secret + HTTPS listener)
+So far the Gateway only speaks HTTP. A real entry point terminates TLS. This step ties three things together: a **certificate**, a Kubernetes **TLS Secret** (LAB062) that stores it, and an **HTTPS listener** on the Gateway that references that Secret.
+
+Generate a self-signed cert and key (in production this comes from a real CA or cert-manager, not `openssl`):
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt \
+  -subj "/CN=*.local.dev" \
+  -addext "subjectAltName=DNS:*.local.dev,DNS:localhost"
+```
+Store it as a **TLS Secret** in the Gateway's namespace. This is a typed `kubernetes.io/tls` Secret holding `tls.crt` + `tls.key`, the same Secret machinery from LAB062, just a specific shape the Gateway knows how to read:
+```
+kubectl create secret tls eg-tls-cert \
+  --cert=/tmp/tls.crt --key=/tmp/tls.key \
+  -n envoy-gateway-system
+```
+Now update the Gateway to add an HTTPS listener that terminates TLS with that Secret (`gateway-tls.yaml` keeps the `:80` listener and adds `:443` with `tls.mode: Terminate` and `certificateRefs: eg-tls-cert`):
+```
+kubectl apply -f gateway-tls.yaml
+kubectl wait --timeout=5m -n envoy-gateway-system gateway/eg-gateway --for=condition=Programmed
+```
+Test over HTTPS. The existing HTTPRoute attaches to the new listener automatically; `-k` because the cert is self-signed:
+```
+curl -k -H "Host: webapp.local.dev" https://$GW/
+```
+Envoy decrypts at the Gateway (**TLS termination**) and forwards plain HTTP to the pod, exactly the SSL-offload pattern of a hardware load balancer. `mode: Terminate` means "decrypt here"; `mode: Passthrough` (via a `TLSRoute`) would instead forward the still-encrypted stream to the backend for end-to-end TLS.
+
 ## How this differs from Ingress (LAB063)
 - **Roles are separated.** The `Gateway` (infra) and the `HTTPRoute` (app team, in `demo-app`) are distinct objects with distinct RBAC. In Ingress it was one blob.
 - **Routing is typed, not annotated.** Header matches, traffic splitting, method matches, cross-namespace refs are **fields** in the spec. In Ingress each of those needed a controller-specific annotation.
@@ -82,13 +110,15 @@ You should get `Hello from Gateway API! Pod: webapp-...`. Repeat and watch the p
 * **Traffic split / canary:** add a second Deployment (`version: v2`) and a second `backendRefs` entry in the HTTPRoute with `weight: 10` vs `weight: 90`. No annotations, just weights.
 * **Header match:** add a rule that matches header `X-Canary: true` and routes it to v2. Compare that to what LAB063's Ingress would have needed.
 * **Second route:** add another HTTPRoute (different hostname) attached to the **same** Gateway, that is the shared-entry-point / role-split model in action.
-* **TLS:** add an HTTPS listener (port 443, `mode: Terminate`) with a TLS Secret and re-test over https.
+* **TLS passthrough:** instead of terminating at the Gateway, use a `TLSRoute` with `mode: Passthrough` so the backend does its own TLS (end-to-end encryption). What can the Gateway still see, and what can't it?
 
 ## Cleanup
 ```
-kubectl delete -f httproute.yaml -f webapp.yaml -f gateway.yaml -f gatewayclass.yaml
+kubectl delete namespace demo-app
+kubectl delete -f gateway-tls.yaml -f gatewayclass.yaml
+kubectl delete secret eg-tls-cert -n envoy-gateway-system
 helm uninstall eg -n envoy-gateway-system
 ```
 (You can leave the Gateway API CRDs and MetalLB in place for later labs.)
 
-> Takeaway: the Gateway API replaces Ingress with a typed, role-oriented model, `GatewayClass` (vendor), `Gateway` (infra's listeners + VIP), `HTTPRoute` (app team's rules). Here Envoy Gateway is the implementation and MetalLB (from LAB050) provides the external IP. Advanced routing (canary, header match, cross-namespace) is built into the API instead of hiding in controller-specific annotations.
+> Takeaway: the Gateway API replaces Ingress with a typed, role-oriented model, `GatewayClass` (vendor), `Gateway` (infra's listeners + VIP), `HTTPRoute` (app team's rules). Here Envoy Gateway is the implementation and MetalLB (from LAB050) provides the external IP. Advanced routing (canary, header match, cross-namespace) is built into the API instead of hiding in controller-specific annotations, and TLS termination is just an HTTPS listener referencing a TLS Secret.

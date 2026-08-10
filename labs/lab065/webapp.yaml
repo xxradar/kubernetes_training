@@ -1,10 +1,6 @@
 # Sample app (echo server) + its internal ClusterIP Service, in the app team's
 # namespace. The HTTPRoute (httproute.yaml) attaches this Service to the Gateway.
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: demo-app
----
+# Create the demo-app namespace first: kubectl create namespace demo-app
 apiVersion: apps/v1
 kind: Deployment
 metadata:
