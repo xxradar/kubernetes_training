@@ -51,6 +51,19 @@ curl -H "Host: echo.local" http://$NODE:$IPORT/
 
 Without the right `Host` header you get a 404 from the controller, proof that routing is host-based, not IP-based.
 
+### Optional: a real external IP via MetalLB
+The NodePort above comes from the LAB000 install (`ingressController.service.type=NodePort`), the safe default on kind where there is no cloud load balancer. If you set up **MetalLB** in LAB050, you can instead give the shared ingress a LoadBalancer IP from the MetalLB pool. This is also a clean example of using `helm upgrade` to tweak a **running** install: `--reuse-values` keeps every current setting and you override just one:
+```
+helm upgrade cilium cilium/cilium --version 1.19.6 -n kube-system --reuse-values \
+  --set ingressController.service.type=LoadBalancer
+kubectl -n kube-system rollout restart deploy/cilium-operator
+```
+Now `cilium-ingress` gets an `EXTERNAL-IP` from the MetalLB range, so you curl it directly, no node port needed:
+```
+export LBIP=$(kubectl get svc -n kube-system cilium-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+curl -H "Host: echo.local" http://$LBIP/
+```
+
 ## What is "old" about Ingress
 Three limits push people to the Gateway API:
 
