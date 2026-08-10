@@ -52,14 +52,17 @@ kubectl get secret db-cred -n config-demo -o jsonpath='{.data.DB_PASSWORD}' | ba
 What actually protects a Secret is **RBAC** (who is allowed to read it) plus optional **encryption-at-rest** for etcd (EncryptionConfiguration / KMS). The base64 is only encoding.
 
 ### Consume it (prefer files over env)
-Env vars are convenient but leakier (they show up in logs, crash dumps, `/proc/<pid>/environ`, and child processes). The `config-env` pod already pulls `db-cred` as env vars:
+Env vars are convenient but leakier (they show up in logs, crash dumps, `/proc/<pid>/environ`, and child processes). Consume the Secret as env vars:
 ```
-kubectl apply -n config-demo -f pod-config-env.yaml
-kubectl exec -n config-demo config-env -- printenv DB_USER DB_PASSWORD
+kubectl apply -n config-demo -f pod-secret-env.yaml
+kubectl wait --for=condition=Ready pod/secret-env -n config-demo --timeout=60s
+kubectl exec -n config-demo secret-env -- printenv DB_USER DB_PASSWORD
 ```
-Mounted as a volume instead (see `pod-config-volume.yaml`, `/etc/secrets`), the values land as files in **tmpfs (RAM)** on the node, never written to the node's disk:
+Mounted as a volume instead, the values land as files in **tmpfs (RAM)** on the node, never written to the node's disk:
 ```
-kubectl exec -n config-demo config-vol -- sh -c 'cat /etc/secrets/DB_PASSWORD; echo'
+kubectl apply -n config-demo -f pod-secret-volume.yaml
+kubectl wait --for=condition=Ready pod/secret-vol -n config-demo --timeout=60s
+kubectl exec -n config-demo secret-vol -- sh -c 'cat /etc/secrets/DB_PASSWORD; echo'
 ```
 For secrets, prefer the **file mount** over env when you can.
 
@@ -87,7 +90,7 @@ For real credential management you usually do not want the value sitting in etcd
 Both are out of scope for this kind cluster (no vault), but the mental split is: native Secret = value lives in **etcd**; CSI / ESO = value lives in an **external vault**, fetched at runtime.
 
 ## Explore it yourself
-* `kubectl describe pod config-env -n config-demo` - are the Secret values shown? (No, but the env var *names* are.)
+* `kubectl describe pod secret-env -n config-demo` - are the Secret values shown? (No, but the env var *names* are.)
 * Recreate `app-config` with `--from-file=` pointing at a real config file. How is a whole-file key mounted?
 * Mark a ConfigMap `immutable: true`. What can you no longer do, and why is that good for a busy control plane?
 * Which of your app's settings belong in a ConfigMap vs a Secret? (Rule of thumb: would it hurt to print it in a log?)

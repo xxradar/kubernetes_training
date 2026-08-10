@@ -1,6 +1,5 @@
-# Consume config + secret as ENVIRONMENT VARIABLES.
-# - envFrom: inject every key of the ConfigMap as an env var
-# - valueFrom.secretKeyRef: inject individual Secret keys
+# Consume the ConfigMap as ENVIRONMENT VARIABLES.
+# envFrom injects every key of the ConfigMap as an env var.
 # NOTE: env vars are frozen at pod start (no live update) and leak more easily
 # than mounted files (logs, crash dumps, /proc/<pid>/environ, child processes).
 apiVersion: v1
@@ -16,14 +15,3 @@ spec:
     envFrom:
     - configMapRef:
         name: app-config
-    env:
-    - name: DB_USER
-      valueFrom:
-        secretKeyRef:
-          name: db-cred
-          key: DB_USER
-    - name: DB_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: db-cred
-          key: DB_PASSWORD
