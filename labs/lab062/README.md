@@ -75,7 +75,9 @@ Change a ConfigMap or Secret and the behaviour differs by how it was consumed:
 See it:
 ```
 kubectl edit configmap app-config -n config-demo    # change APP_COLOR to green
-# wait ~60s, then:
+```
+wait ~60s, then:
+```
 kubectl exec -n config-demo config-vol -- cat /etc/appconfig/APP_COLOR   # -> green (updated)
 kubectl exec -n config-demo config-env -- printenv APP_COLOR             # -> still blue (frozen)
 ```

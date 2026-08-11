@@ -1,0 +1,12 @@
+#cloud-config
+ssh_pwauth: true
+chpasswd:
+  expire: false
+  users:
+    - name: ubuntu
+      password: ChangeMe-Str0ng!
+      type: text
+runcmd:
+  - sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  - rm -f /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+  - systemctl restart ssh

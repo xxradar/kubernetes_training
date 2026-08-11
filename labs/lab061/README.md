@@ -33,6 +33,8 @@ Wait for it to be ready, read it back, then delete the pod and note the data is 
 ```
 kubectl wait --for=condition=Ready pod/scratch -n storage-demo --timeout=60s
 kubectl exec -n storage-demo scratch -- cat /data/file
+```
+```
 kubectl delete pod scratch -n storage-demo
 ```
 ### Sharing between containers (init container + main)
@@ -126,6 +128,8 @@ kubectl exec -n storage-demo pvc-demo -- sh -c 'echo "persistent data" > /data/s
 Now prove it persists across the pod's life. Delete and recreate **the pod** (not the PVC):
 ```
 kubectl delete pod pvc-demo -n storage-demo
+```
+```
 kubectl apply -n storage-demo -f pod-with-pvc.yaml
 kubectl wait --for=condition=Ready pod/pvc-demo -n storage-demo --timeout=90s
 kubectl exec -n storage-demo pvc-demo -- cat /data/state.txt
