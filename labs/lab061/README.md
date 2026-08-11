@@ -71,7 +71,7 @@ kubectl wait --for=condition=Ready pod/shared-web -n storage-demo --timeout=60s
 kubectl port-forward -n storage-demo pod/shared-web 8080:80 &
 curl -s localhost:8080
 ```
-You get back the HTML the init container produced, served by a different container, because they share the volume. In real life the init container might `git clone` or `curl` the content instead of echoing it. Stop the port-forward with `kill %1` when done.
+You get back the HTML the init container produced, served by a different container, because they share the volume. In real life the init container might `git clone` or `curl` the content instead of echoing it. <br> Stop the port-forward with `kill %1` when done.
 
 `emptyDir` is not persistence, it is a shared RAM/disk tmp between containers. For anything you care about, keep reading.
 
