@@ -5,7 +5,7 @@
 Kubernetes uses three probes to decide the state of a container. For a network engineer the key one is the **readiness** probe, because it controls whether a pod is in the Service Endpoints, and therefore whether it receives traffic.
 
 ## The three probes
-- **readiness**: is the pod ready to serve? While it fails, the pod is removed from the Service Endpoints, so it gets **no traffic**. The container is **not** restarted. This is the traffic control.
+- **readiness**: is the pod ready to serve? While it fails, the pod is taken **out of the Service's ready endpoints** (its endpoint stays listed but flips to `ready=false`), so it gets **no traffic**. The container is **not** restarted. This is the traffic control.
 - **liveness**: is the container still healthy? When it fails, the kubelet **restarts** the container.
 - **startup**: has a slow app finished starting? Until it passes, liveness and readiness are held off, so a slow starter is not killed before it is up.
 
@@ -75,11 +75,20 @@ Watch that pod go `READY 0/1` within a few seconds, while its `RESTARTS` stays a
 ```
 kubectl get po -n prod-nginx -l app=nginx -w
 ```
-Now look at the Endpoints again. The NotReady pod's IP is **gone**, so the Service no longer sends it traffic:
+Now look at the EndpointSlice. The NotReady pod's IP does **not** disappear, the entry stays, but its `ready` condition flips to `false`. That flag is what the dataplane (kube-proxy / Cilium) uses to stop load-balancing to it. Print the IP + ready state of every endpoint:
 ```
-kubectl get endpointslices -n prod-nginx -l kubernetes.io/service-name=my-nginx-clusterip
+kubectl get endpointslices -n prod-nginx -l kubernetes.io/service-name=my-nginx-clusterip \
+  -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"  ready="}{.conditions.ready}{"\n"}{end}'
 ```
-Put the file back and the pod returns to the Endpoints:
+The broken pod shows `ready=false`, the others `ready=true`. (Plain `kubectl get endpointslices` lists every IP in one `ENDPOINTS` column regardless of readiness, which is why they all look present, the actual state lives in the per-endpoint `conditions`.)
+
+> The **legacy `Endpoints` object** (what `kubectl describe svc` reads) represents this differently: it *moves* the IP out of the ready list into `notReadyAddresses`, so there the NotReady pod really does drop off the visible `Endpoints:` line. Same fact, two representations:
+> ```
+> kubectl get endpoints my-nginx-clusterip -n prod-nginx \
+>   -o jsonpath='{"ready: "}{.subsets[*].addresses[*].ip}{"\nnotReady: "}{.subsets[*].notReadyAddresses[*].ip}{"\n"}'
+> ```
+
+Put the file back and the pod's endpoint flips `ready=true` again:
 ```
 kubectl exec -n prod-nginx <one-nginx-pod> -- sh -c 'echo ok > /usr/share/nginx/html/healthz'
 ```
@@ -93,7 +102,7 @@ After a few failed checks the kubelet restarts the container. Watch `RESTARTS` g
 ```
 kubectl get po -n prod-nginx -l app=nginx -w
 ```
-On restart the container command recreates both files, so the pod recovers on its own. Note the difference from readiness: liveness **restarts**, readiness only **removes from Endpoints**.
+On restart the container command recreates both files, so the pod recovers on its own. Note the difference from readiness: liveness **restarts** the container, readiness only flips the endpoint to **NotReady** (no traffic, no restart).
 
 ## Startup probe
 The startup probe runs first and holds off the readiness and liveness probes until it passes (here `failureThreshold: 30` x `periodSeconds: 2` = up to 60s of grace). It exists so a slow-starting app is not killed by the liveness probe before it has finished coming up. nginx starts instantly, so you will not see it flap here, but the pattern matters for real workloads (JVMs, databases, apps that warm caches).
@@ -103,4 +112,4 @@ The startup probe runs first and holds off the readiness and liveness probes unt
 * What is the difference in `RESTARTS` between the readiness break and the liveness break?
 * Why would a liveness probe on a slow-starting app, without a startup probe, cause a restart loop?
 
-> Takeaway: readiness controls **traffic** (in or out of the Endpoints), liveness controls **restarts**, and startup gives a slow app **grace** before the other two apply. Readiness is the one that plugs straight into the Service and Endpoints model from LAB030.
+> Takeaway: readiness controls **traffic** (it flips the endpoint's `ready` flag in or out of the Service's ready set), liveness controls **restarts**, and startup gives a slow app **grace** before the other two apply. Readiness is the one that plugs straight into the Service and Endpoints model from LAB030.
