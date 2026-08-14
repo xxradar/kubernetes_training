@@ -34,8 +34,7 @@
 - Resource requests / limits (as a security control)
 - securityContext hardening (runAsNonRoot, readOnlyRootFS, drop caps, seccomp)
 - Network policies (default-deny)
-- labs 025, 070 080
-
+- labs 072, 074, 075
 
 ## Session 5
 - Pod Security Standards
