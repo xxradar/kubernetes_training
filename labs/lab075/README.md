@@ -1,13 +1,13 @@
 # LAB075 - Kubernetes native network security policies
 
-A **NetworkPolicy** is Kubernetes' built-in, pod-level firewall. For a network engineer the model is deliberately small, and a few rules are worth internalising up front:
+A **NetworkPolicy** is Kubernetes' built-in, pod-level firewall. 
 
 - **Namespaced and label-selected.** A policy lives in a namespace and picks pods by label (`podSelector`). It affects only the pods it selects.
 - **Allow-only, additive.** There is no "deny" rule. You select pods and list what is *allowed*; everything else to/from those pods is dropped. Multiple policies **union** their allow-lists.
 - **Empty selector = everything.** `podSelector: {}` selects every pod in the namespace, the trick for a namespace-wide default.
 - **The switch is `policyTypes`.** A pod is unrestricted for a direction until *some* policy with that `policyType` (`Ingress`/`Egress`) selects it. After that, only explicit `from`/`to` rules get through.
 - **Both ends matter.** Traffic from A to B must be allowed by **B's ingress** *and* **A's egress** (whenever either side has a policy for that direction). You will watch this play out below: opening the server's ingress is not enough while the client's egress is still denied.
-- **Enforcement is the CNI's job.** The API object is standard, but a CNI that enforces it (**Cilium**, **Calico**) must be installed, plain kindnet ignores it.
+- **Enforcement is the CNI's job.** The API object is standard, but a **policy-capable CNI must actually enforce it** — Cilium and Calico do. Some don't: `kindnet` and plain `flannel` ignore NetworkPolicy entirely. On managed clouds it is usually supported but **off until you enable it** (GKE Network Policy / Dataplane V2, AKS's network-policy option, EKS's VPC-CNI NetworkPolicy feature or Calico).
 
 > These labs require a K8s cluster with the **Cilium** or **Calico** CNI. The final section uses a Cilium-only CRD.
 
