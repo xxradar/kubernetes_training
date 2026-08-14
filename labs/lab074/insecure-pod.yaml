@@ -1,0 +1,14 @@
+# Baseline: NO securityContext at all.
+# Runs as root (uid 0), writable root filesystem, a default Linux capability
+# set, privilege escalation allowed, seccomp Unconfined. This is what you are
+# hardening away from — compare it against hardened-pod.yaml.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure
+  namespace: secctx-demo
+spec:
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh","-c","sleep 3600"]

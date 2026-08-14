@@ -16,6 +16,7 @@
 * [Ingress (classic L7 entry point) - Lab063](labs/lab063/README.md) — `Beginner`
 * [Gateway API (Envoy Gateway) - Lab065](labs/lab065/README.md) — `Beginner`
 * [Resource requests and limits (CPU, memory, QoS) - Lab072](labs/lab072/README.md) — `Advanced · Optional`
+* [Hardening pods with securityContext - Lab074](labs/lab074/README.md) — `Beginner`
 * [Kubernetes native network security policies - Lab075](labs/lab075/README.md) — `Beginner`
 * [Global network security policies - Lab080](labs/lab080/README.md) — `Beginner`
 * [Troubleshooting - Lab100](labs/lab100/README.md) — `Beginner`

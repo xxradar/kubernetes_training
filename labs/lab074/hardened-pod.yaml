@@ -1,0 +1,40 @@
+# Hardened: the securityContext checklist (the "restricted" baseline).
+#
+# Pod-level (identity + defaults for all containers):
+#   runAsNonRoot     - refuse to start if the container would run as root
+#   runAsUser/Group  - the UID/GID to run as
+#   fsGroup          - group that owns mounted volumes
+#   seccompProfile   - RuntimeDefault: apply the runtime's syscall blocklist
+#
+# Container-level (per-container limits):
+#   allowPrivilegeEscalation: false - sets no_new_privs, neutralises setuid
+#   readOnlyRootFilesystem: true     - '/' is read-only; writable dirs via volumes
+#   capabilities.drop: [ALL]         - remove every Linux capability
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hardened
+  namespace: secctx-demo
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh","-c","sleep 3600"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp          # explicit writable scratch (root fs is read-only)
+  volumes:
+  - name: tmp
+    emptyDir: {}
