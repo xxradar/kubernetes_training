@@ -85,7 +85,7 @@ kubectl exec -n storage-demo hostpath-demo -- sh -c 'echo "written by pod" > /ho
 
 > **On kind (incl. Docker Desktop on Mac):** the "node" is a Docker container, so this path lives *inside* that node container, on a Mac that means inside Docker Desktop's Linux VM, **not** on your macOS disk. The data survives pod delete/recreate on the same node and a node-container restart, but it is wiped by `kind delete cluster` and is not visible from your Mac's filesystem. So it is node-container-scoped, not true host persistence.
 
-Two things a network/security engineer must know about `hostPath`:
+Two things to know about `hostPath`:
 
 - **No scheduling awareness.** A plain `hostPath` puts **no constraint** on the scheduler. An in-place container restart stays on the node, but a *recreated* pod (Deployment replacing it, or a delete+create) is scheduled fresh and can land on a different node, where that directory is empty or missing. The data does not follow.
 - **Security risk.** `hostPath` is direct access to the node filesystem, a classic container-escape / privilege-escalation vector, and is commonly blocked by Pod Security Standards. Use it only for node-level agents that genuinely need it.

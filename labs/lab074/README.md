@@ -1,6 +1,6 @@
 # LAB074 - Hardening pods with securityContext
 
-By default a container runs with far more privilege than it needs: as **root**, with a **writable** filesystem, a set of Linux **capabilities**, and the ability to **escalate** privileges. If that container is compromised, all of that becomes the attacker's. A pod's **`securityContext`** is where you strip those privileges away, shrinking the blast radius of a break-in. For a security engineer this is the core container-hardening checklist.
+By default a container runs with far more privilege than it needs: as **root**, with a **writable** filesystem, a set of Linux **capabilities**, and the ability to **escalate** privileges. If that container is compromised, all of that becomes the attacker's. A pod's **`securityContext`** is where you strip those privileges away, shrinking the blast radius of a break-in. This is the core container-hardening checklist.
 
 There are two levels, and the distinction matters:
 

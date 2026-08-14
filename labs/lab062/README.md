@@ -42,7 +42,7 @@ kubectl create secret generic db-cred -n config-demo \
   --from-literal=DB_USER=admin \
   --from-literal=DB_PASSWORD=s3cr3t
 ```
-Now the single most important point for a security engineer, **base64 is not encryption**:
+Now the single most important point, **base64 is not encryption**:
 ```
 kubectl get secret db-cred -n config-demo -o jsonpath='{.data.DB_PASSWORD}'; echo
 # -> czNjcjN0   (just base64)

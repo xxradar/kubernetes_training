@@ -2,7 +2,7 @@
 
 An **Ingress** is Kubernetes' original way to expose HTTP(S) services to the outside world at **L7**: one shared entry point that routes by **Host header** and **URL path** to different backend Services, with optional TLS termination. The Ingress *resource* is only the rules; an **ingress controller** (nginx, Traefik, HAProxy, or here Cilium's built-in one) is the actual proxy that enforces them.
 
-For a network engineer: think of it as a shared reverse proxy / L7 virtual server. A LoadBalancer Service (LAB050) gives **one** service **one** external L4 IP; an Ingress lets **many** HTTP services share a single entry point and splits them by Host/path, like name-based virtual hosting on a web proxy.
+Think of it as a shared reverse proxy / L7 virtual server. A LoadBalancer Service (LAB050) gives **one** service **one** external L4 IP; an Ingress lets **many** HTTP services share a single entry point and splits them by Host/path, like name-based virtual hosting on a web proxy.
 
 > Why "classic": Ingress is the older API. It works and is everywhere, but it is limited and is being superseded by the **Gateway API** (LAB065). We cover it so you recognise it, then show the modern model next.
 
@@ -71,7 +71,7 @@ Three limits push people to the Gateway API:
 - **Thin expressiveness.** The spec covers Host + path and little else. Header-based routing, traffic splitting / canary, gRPC, TLS passthrough, cross-namespace backends, all of it lives in **controller-specific annotations** that differ per controller and don't port between nginx, Traefik, Cilium, cloud LBs, etc.
 - **Not typed / not portable.** Those annotations are opaque strings, not first-class API objects, so tooling and RBAC can't reason about them.
 
-The **Gateway API** (LAB065) fixes exactly this: `GatewayClass` (the vendor/infra), `Gateway` (listeners / the VIP, owned by the platform team), and typed routes (`HTTPRoute`, `TLSRoute`, …, owned by app teams) — portable, role-oriented, and expressive without annotations. Same job, cleaner model. That's the next lab.
+The **Gateway API** (LAB065) fixes exactly this: `GatewayClass` (the vendor/infra), `Gateway` (listeners / the VIP, owned by the platform team), and typed routes (`HTTPRoute`, `TLSRoute`, …, owned by app teams), portable, role-oriented, and expressive without annotations. Same job, cleaner model. That's the next lab.
 
 ## Explore it yourself
 * Add a second Host (or path) in `ingress.yaml` pointing at another Service. One entry point, many apps, split by Host, that is the whole point of Ingress.
