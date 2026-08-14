@@ -15,7 +15,8 @@
 * [ConfigMaps and Secrets - Lab062](labs/lab062/README.md) — `Beginner`
 * [Ingress (classic L7 entry point) - Lab063](labs/lab063/README.md) — `Beginner`
 * [Gateway API (Envoy Gateway) - Lab065](labs/lab065/README.md) — `Beginner`
-* [Kubernetes native network security policies - Lab070](labs/lab070/README.md) — `Beginner`
+* [Resource requests and limits (CPU, memory, QoS) - Lab072](labs/lab072/README.md) — `Advanced · Optional`
+* [Kubernetes native network security policies - Lab075](labs/lab075/README.md) — `Beginner`
 * [Global network security policies - Lab080](labs/lab080/README.md) — `Beginner`
 * [Troubleshooting - Lab100](labs/lab100/README.md) — `Beginner`
 * [Fortinet K8S SDN connector - Lab110](labs/lab110/README.md) — `Beginner`
