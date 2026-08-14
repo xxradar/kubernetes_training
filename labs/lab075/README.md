@@ -7,9 +7,19 @@ A **NetworkPolicy** is Kubernetes' built-in, pod-level firewall.
 - **Empty selector = everything.** `podSelector: {}` selects every pod in the namespace, the trick for a namespace-wide default.
 - **The switch is `policyTypes`.** A pod is unrestricted for a direction until *some* policy with that `policyType` (`Ingress`/`Egress`) selects it. After that, only explicit `from`/`to` rules get through.
 - **Both ends matter.** Traffic from A to B must be allowed by **B's ingress** *and* **A's egress** (whenever either side has a policy for that direction). You will watch this play out below: opening the server's ingress is not enough while the client's egress is still denied.
-- **Enforcement is the CNI's job.** The API object is standard, but a **policy-capable CNI must actually enforce it** — Cilium and Calico do. Some don't: `kindnet` and plain `flannel` ignore NetworkPolicy entirely. On managed clouds it is usually supported but **off until you enable it** (GKE Network Policy / Dataplane V2, AKS's network-policy option, EKS's VPC-CNI NetworkPolicy feature or Calico).
+- **Enforcement is the CNI's job.** The API object is standard, but a **policy-capable CNI must actually enforce it** — the object exists either way, so a policy can silently do nothing. See the note below on which CNIs enforce it.
 
-> These labs require a K8s cluster with the **Cilium** or **Calico** CNI. The final section uses a Cilium-only CRD.
+> These labs require a cluster whose CNI **enforces** NetworkPolicy (**Cilium** or **Calico** are the easy choices). The final section uses a Cilium-only CRD.
+
+### Which CNIs enforce NetworkPolicy?
+**Enforce it:** Cilium, Calico (and Canal = Calico policy + flannel networking), Antrea, Kube-router. <br>
+**Ignore it (no policy engine):** `kindnet`, plain `flannel`, and the AWS VPC CNI *without* its policy feature enabled.
+
+On managed clouds NetworkPolicy is supported but usually **off until you turn it on**:
+
+- **EKS** — the AWS VPC CNI enforces it **natively** since VPC-CNI **v1.14.0** (EKS ≥ 1.25), enabled with `enable-network-policy-controller: "true"` (eBPF); or install Calico.
+- **GKE** — enable the **Network Policy** add-on (Calico-based), or use **Dataplane V2**, which is Cilium/eBPF and enforces it by default.
+- **AKS** — choose a policy engine at cluster creation: **Cilium** (Azure CNI Powered by Cilium), **Calico**, or **Azure NPM** (NPM is being retired on Linux by 30 Sep 2028 in favour of Cilium).
 
 ## Setting up a lab environment
 Three namespaces: `prod-nginx` (the workload we protect), plus `dev-nginx` and `myhackns` (clients we test from).
