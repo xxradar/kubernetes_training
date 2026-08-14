@@ -1,6 +1,3 @@
-# Consume the ConfigMap as FILES (volume mount).
-# Each key becomes a file under /etc/appconfig. Volume-mounted keys update
-# live (~60s) when the ConfigMap changes, unlike env vars.
 apiVersion: v1
 kind: Pod
 metadata:

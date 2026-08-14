@@ -33,7 +33,7 @@
 ## Session 4
 - Resource requests / limits (as a security control)
 - securityContext hardening (runAsNonRoot, readOnlyRootFS, drop caps, seccomp)
-- Network policies (default-deny)
+- Network policies
 - labs 072, 074, 075
 
 ## Session 5
