@@ -33,11 +33,11 @@
 ## Session 4
 - Resource requests / limits (as a security control)
 - securityContext hardening (runAsNonRoot, readOnlyRootFS, drop caps, seccomp)
+- Pod Security Standards
 - Network policies
 - labs 072, 074, 075
 
 ## Session 5
-- Pod Security Standards
 - Admission control (Kyverno / Gatekeeper)
 - Image security (scanning: Trivy / signing: cosign, verified at admission)
 - Audit logs
