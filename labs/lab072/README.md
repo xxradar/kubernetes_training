@@ -1,4 +1,4 @@
-# LAB025 - Resource requests and limits (CPU, memory, QoS)
+# LAB072 - Resource requests and limits (CPU, memory, QoS)
 
 > **Standalone lab.** It uses its own namespace `resource-demo`, so the `ResourceQuota` at the end does not affect the `prod-nginx` chain. Follows naturally from LAB020 (Deployments).
 
