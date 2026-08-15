@@ -82,7 +82,75 @@ kubectl exec -n secctx-demo hardened -- grep Seccomp /proc/1/status
 ```
 kubectl get pod hardened -n secctx-demo -o jsonpath='{.spec.securityContext}{"\n"}{.spec.containers[0].securityContext}{"\n"}'
 ```
-This is exactly the shape the **Pod Security Standards** `restricted` profile enforces (Session 5), non-root, no privilege escalation, all capabilities dropped, `RuntimeDefault` seccomp. Setting it per-pod is step one; admission control makes it mandatory cluster-wide.
+This is exactly the shape the **Pod Security Standards** `restricted` profile requires: non-root, no privilege escalation, all capabilities dropped, `RuntimeDefault` seccomp. Setting it per-pod is step one; the next section makes it mandatory per namespace.
+
+## Pod Security Standards and Admission
+Setting `securityContext` on every pod by hand does not scale. **Pod Security Standards (PSS)** bundle these settings into three profiles, and **Pod Security Admission (PSA)**, built into Kubernetes since v1.25 (it replaced PodSecurityPolicy), enforces a chosen profile per namespace.
+
+Three profiles:
+
+- **Privileged**: unrestricted, wide open. For trusted / system workloads.
+- **Baseline**: blocks known privilege escalations; minimal and broadly compatible.
+- **Restricted**: the hardened best-practice profile, non-root, drop capabilities, no privilege escalation, `RuntimeDefault` seccomp (the `hardened-pod.yaml` above).
+
+You turn it on with **namespace labels** of the form `pod-security.kubernetes.io/<mode>: <profile>`, in three independent modes:
+
+- **enforce**: reject pods that violate the profile.
+- **audit**: allow, but record the violation in the audit log.
+- **warn**: allow, but return a warning to the client (e.g. `kubectl`).
+
+The modes are independent, so you can `warn=restricted` while you still `enforce=baseline`, a safe way to preview a stricter profile before flipping it on.
+
+### warn: allowed, but flagged
+```
+kubectl create ns psa-warn
+kubectl label ns psa-warn pod-security.kubernetes.io/warn=restricted
+```
+Create a plain, non-compliant pod:
+```
+kubectl run demo -n psa-warn --image=busybox --command -- sleep 3600
+```
+**Expected:** the pod **is** created, but `kubectl` prints a warning listing every restricted violation (`allowPrivilegeEscalation != false`, `unrestricted capabilities`, `runAsNonRoot != true`, `seccompProfile`). Confirm it exists:
+```
+kubectl get po -n psa-warn
+```
+
+### enforce: rejected at admission
+```
+kubectl create ns psa-enforce
+kubectl label ns psa-enforce pod-security.kubernetes.io/enforce=restricted
+```
+The same non-compliant pod is now **refused**:
+```
+kubectl run demo -n psa-enforce --image=busybox --command -- sleep 3600
+```
+**Expected:** `Error from server (Forbidden): ... violates PodSecurity "restricted:latest"`, and no pod is created.
+
+A pod that meets the restricted profile is admitted:
+```
+kubectl apply -n psa-enforce -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: busybox
+    command: ["sh","-c","sleep 3600"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+EOF
+kubectl get po -n psa-enforce
+```
+**Expected:** `good` is admitted and runs. That is `securityContext` turned from a per-pod option into a namespace-wide guardrail.
 
 ## Explore it yourself
 * Give the hardened container back one capability it might legitimately need, e.g. `add: ["NET_BIND_SERVICE"]` to bind port 80 as non-root. Re-check `CapEff`.
@@ -92,7 +160,7 @@ This is exactly the shape the **Pod Security Standards** `restricted` profile en
 
 ## Cleanup
 ```
-kubectl delete ns secctx-demo
+kubectl delete ns secctx-demo psa-warn psa-enforce
 ```
 
-> Takeaway: `securityContext` is the per-pod hardening checklist, run as **non-root**, **read-only** root filesystem, **drop all capabilities**, **no privilege escalation**, and **`RuntimeDefault` seccomp**, with pod-level fields for identity and container-level fields for per-container limits. Each one shrinks what a compromised container can do; together they are the `restricted` Pod Security Standard you will enforce cluster-wide in Session 5.
+> Takeaway: `securityContext` is the per-pod hardening checklist, run as **non-root**, **read-only** root filesystem, **drop all capabilities**, **no privilege escalation**, and **`RuntimeDefault` seccomp**, with pod-level fields for identity and container-level fields for per-container limits. Each one shrinks what a compromised container can do; together they are the `restricted` Pod Security Standard, which **Pod Security Admission** turns into a namespace-wide guardrail via labels (`enforce` rejects, `audit` logs, `warn` flags).
