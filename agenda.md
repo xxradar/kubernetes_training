@@ -34,17 +34,17 @@
 - Resource requests / limits (as a security control)
 - securityContext hardening (runAsNonRoot, readOnlyRootFS, drop caps, seccomp)
 - Pod Security Standards
+- Image and IaC security
 - Network policies
 - labs 072, 074, 075
 
 ## Session 5
-- Admission control (Kyverno / Gatekeeper)
-- Image security (scanning: Trivy / signing: cosign, verified at admission)
+- Introduction to Helm
+- RBAC + ServiceAccounts
 - Audit logs
 - Events
+- Admission control (Kyverno / Gatekeeper)
 - Observability & metrics (metrics-server, Prometheus model, logs, Hubble)
-- RBAC + ServiceAccounts
-- Introduction to Helm
 - lab 090 100 110
 
 
