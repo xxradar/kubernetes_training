@@ -102,6 +102,8 @@ curl $POD                       # straight to a pod IP
 
 For every step below: **apply the policy in terminal 1**, then switch to the **still-open debug pod in terminal 2** and re-run the three probes. Watch the verdict change in real time, no need to restart the pod.
 
+Simple rule throughout the lab: throwaway `kubectl run` client pods go in **terminal 2**; `apply` and `label` commands go in **terminal 1**.
+
 ### 1. Default-deny
 The foundational move: select every pod, mark both directions restricted, allow nothing.
 ```
@@ -228,7 +230,7 @@ curl $POD
 **Expected:** both curls now succeed. Ingress (server) **and** egress (client) are both satisfied.
 
 ### 5. Ingress from a different namespace
-This client lives in **another namespace**, so it is the one case where you start a **new** pod (in terminal 2, exit or leave the `prod-nginx` debug pod first). Cross-namespace traffic needs a `namespaceSelector`. Two equivalent options: extend `allow-http` with a second `from`, or add a dedicated policy.
+This client lives in **another namespace**, so you start a **new** throwaway pod in **terminal 2**. Cross-namespace traffic needs a `namespaceSelector`. Two equivalent options: extend `allow-http` with a second `from`, or add a dedicated policy.
 ```
 kubectl apply -n prod-nginx -f - <<EOF
 apiVersion: networking.k8s.io/v1
@@ -285,10 +287,11 @@ EOF
 ```
 kubectl get netpol -n prod-nginx
 ```
-Label the client namespace so the `namespaceSelector` matches, then launch a client in `myhackns` carrying the `mode=debug` label the policy requires:
+In **terminal 1**, label the client namespace so the `namespaceSelector` matches:
 ```
 kubectl label ns myhackns project=debug
 ```
+In **terminal 2**, launch a client in `myhackns` carrying the `mode=debug` label the policy requires:
 ```
 kubectl run -it --rm  -n myhackns --image xxradar/hackon -l mode=debug debug
 ```
@@ -309,7 +312,7 @@ Right pod label, **wrong namespace** (`dev-nginx` is not labelled `project=debug
 kubectl run -it --rm  -n dev-nginx --image xxradar/hackon -l mode=debug debug
 curl my-nginx-clusterip.prod-nginx
 ```
-Fix it by labelling the namespace, then retry:
+Fix it: label the namespace in **terminal 1**, then re-run the client in **terminal 2**:
 ```
 kubectl label ns dev-nginx project=debug
 ```
