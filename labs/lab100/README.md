@@ -48,16 +48,16 @@ To see what the **node** sees (all interfaces, the CNI plumbing, real traffic), 
 kubectl run -it --rm debug --restart=Never --image=xxradar/hackon \
   --overrides='{"kind":"Pod","apiVersion":"v1","spec":{"hostNetwork":true}}'
 ```
-Now `ip a` shows the node's interfaces (the `cali*`/`cilium*` veth pairs, the CNI overlay device, `eth0`):
+Now `ip a` shows the node's interfaces: `eth0` (the node IP on the `kind` docker network) plus the CNI's own devices (`cilium_host`/`cilium_net` on Cilium, `cali*`/`vxlan.calico` on Calico):
 ```
 ip a
 ```
 ```
 ...
-4: vxlan.calico: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 ...
-    inet 10.10.110.128/32 scope global vxlan.calico
-83: eth0@if84: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
-    inet 172.18.0.5/16 brd 172.18.255.255 scope global eth0
+6: cilium_host@cilium_net: <BROADCAST,MULTICAST,NOARP,UP,LOWER_UP> mtu 1500 ...
+    inet 10.244.1.184/32 scope global cilium_host
+20: eth0@if21: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 ...
+    inet 172.19.0.7/16 brd 172.19.255.255 scope global eth0
 ...
 ```
 And capture live traffic on the node with `tcpdump`:

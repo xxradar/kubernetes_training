@@ -67,9 +67,9 @@ The token and the cluster CA are now in that Secret (base64-encoded, remember LA
 kubectl get secret viewer-token -o jsonpath='{.data.token}' | base64 -d; echo
 kubectl get secret viewer-token -o jsonpath='{.data.ca\.crt}' | base64 -d | head -3
 ```
-Find the API server URL (the third piece a client needs):
+Find the API server URL (the third piece a client needs). Use `--minify` so it reports the **current** context; without it, `clusters[0]` is simply the first cluster in your kubeconfig, which may be a different one:
 ```
-kubectl config view -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 ```
 Token + CA + URL is everything an outside client needs to authenticate as `viewer`, with exactly the read-only rights the ClusterRole grants.
 
@@ -112,10 +112,10 @@ kubectl create clusterrolebinding fgt-connector \
 ```
 Now hand the FortiGate the three values it asks for.
 
-API server endpoint (IP/port):
+API server endpoint (IP/port). `cluster-info` and the `--minify` form both report the current cluster:
 ```
 kubectl cluster-info
-kubectl config view -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}{"\n"}'
 ```
 The token (paste into the connector's `Secret Token` field):
 ```
