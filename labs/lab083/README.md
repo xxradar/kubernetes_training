@@ -94,7 +94,7 @@ metadata:
 type: kubernetes.io/service-account-token
 EOF
 ```
-Read-only ClusterRole over the resources the connector maps, and the binding:
+Read-only ClusterRole over the resources the connector maps:
 ```
 kubectl apply -f - <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
@@ -106,6 +106,9 @@ rules:
   resources: ["pods", "namespaces", "nodes", "services"]
   verbs: ["get", "watch", "list"]
 EOF
+```
+Bind it to the ServiceAccount:
+```
 kubectl create clusterrolebinding fgt-connector \
   --clusterrole=fgt-connector \
   --serviceaccount=default:fortigateconnector
