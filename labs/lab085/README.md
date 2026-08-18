@@ -1,0 +1,3 @@
+ - Audit logs
+- Events
+- Observability & metrics (metrics-server, Prometheus model, logs, Hubble)
