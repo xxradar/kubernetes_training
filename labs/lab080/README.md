@@ -13,7 +13,7 @@ Four terms cover most of it:
 
 > Runs on the kind cluster from LAB000. Requires the `helm` CLI.
 
-> **Chart source note.** Many older tutorials use Bitnami charts. As of 2025 Bitnami moved its catalog behind a Broadcom subscription and its free Docker Hub images are restricted, so those charts break. This lab uses **podinfo**, a small, freely maintained demo app that is ideal for practising install / upgrade / rollback.
+> **Chart source note.** Many older tutorials use Bitnami charts. The chart *source* is still open (Apache-2.0 on GitHub), but the distribution changed in 2025: the `helm repo add https://charts.bitnami.com/bitnami` method is deprecated in favour of OCI (`oci://registry-1.docker.io/bitnamicharts/<chart>`), the images moved to hardened *Bitnami Secure Images*, and the previous free Debian images were relegated to an unsupported `bitnamilegacy` registry (full access needs a Broadcom subscription). Older `bitnami/nginx`-style tutorials can therefore fail on image pulls. This lab uses **podinfo**, a small, free, self-contained chart that is ideal for practising install / upgrade / rollback.
 
 ## 1. Add a repository and search it
 ```
