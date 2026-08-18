@@ -78,25 +78,29 @@ Look at the pods, their labels, and the service:
 kubectl get po -n prod-nginx -o wide --show-labels
 kubectl get svc -n prod-nginx -o wide --show-labels
 ```
-In your **first terminal**, grab a backend pod IP (this `$POD` value is passed into the debug pod so you can also test a raw pod IP):
+This lab uses **two terminals**, and the whole point is to watch each policy take effect **live** on a pod that stays running:
+
+- **Terminal 1 (policy):** where you `apply` and delete NetworkPolicies.
+- **Terminal 2 (client):** a throwaway `debug` pod you start **once** and keep open, re-running the same probes after each change. Policies apply to running pods immediately, so you never restart it.
+
+In **terminal 2**, grab a backend pod IP and start the debug pod. Keep `$POD` and the `kubectl run` in the **same** terminal, the variable is expanded into the pod so you can also curl a raw pod IP:
 ```
-POD=$(kubectl get pods -n prod-nginx  -l app=nginx -o jsonpath='{range .items[0]}{@.status.podIP}{"\n"}{end}')
-```
-Open a **second terminal** and start a throwaway client pod. Keep it open, network policies apply to running pods live, so you can watch each change take effect without restarting:
-```
+POD=$(kubectl get pods -n prod-nginx -l app=nginx -o jsonpath='{range .items[0]}{@.status.podIP}{"\n"}{end}')
 kubectl run -it --rm -n prod-nginx --image xxradar/hackon --env="POD=$POD" debug
 ```
-Inside the pod, run the three probes we reuse at every step:
+You are now **inside** the debug pod. Run the three probes we reuse at every step:
 ```
 nslookup my-nginx-clusterip     # DNS  -> egress to kube-dns
 curl my-nginx-clusterip         # via the Service -> nginx ingress + your egress
 curl $POD                       # straight to a pod IP
 ```
-**Expected (no policy yet):** all three succeed.
+**Expected (no policy yet):** all three succeed. **Leave this pod open** for the rest of the lab.
 
 > **Tip:** `kubectl run debug` automatically labels the pod `run=debug`, that label is what the egress policy in step 4 selects.
 
 ## Network policies
+
+For every step below: **apply the policy in terminal 1**, then switch to the **still-open debug pod in terminal 2** and re-run the three probes. Watch the verdict change in real time, no need to restart the pod.
 
 ### 1. Default-deny
 The foundational move: select every pod, mark both directions restricted, allow nothing.
@@ -117,10 +121,7 @@ EOF
 ```
 kubectl get netpol -n prod-nginx
 ```
-Re-run the probes from a fresh debug pod:
-```
-kubectl run -it --rm -n prod-nginx --image xxradar/hackon --env="POD=$POD" debug
-```
+Back in the debug pod (terminal 2), re-run the probes:
 ```
 nslookup my-nginx-clusterip
 curl my-nginx-clusterip
@@ -157,9 +158,7 @@ EOF
 ```
 kubectl get netpol -n prod-nginx
 ```
-```
-kubectl run -it --rm -n prod-nginx --image xxradar/hackon --env="POD=$POD" debug
-```
+Back in the debug pod (terminal 2), re-run the probes:
 ```
 nslookup my-nginx-clusterip
 curl my-nginx-clusterip
@@ -191,9 +190,7 @@ EOF
 ```
 kubectl get netpol -n prod-nginx
 ```
-```
-kubectl run -it --rm -n prod-nginx --image xxradar/hackon --env="POD=$POD" debug
-```
+Back in the debug pod (terminal 2), re-run the probes:
 ```
 nslookup my-nginx-clusterip
 curl my-nginx-clusterip
@@ -222,9 +219,7 @@ EOF
 ```
 kubectl get netpol -n prod-nginx
 ```
-```
-kubectl run -it --rm -n prod-nginx --image xxradar/hackon --env="POD=$POD" debug
-```
+Back in the debug pod (terminal 2), re-run the probes:
 ```
 nslookup my-nginx-clusterip
 curl my-nginx-clusterip
@@ -233,7 +228,7 @@ curl $POD
 **Expected:** both curls now succeed. Ingress (server) **and** egress (client) are both satisfied.
 
 ### 5. Ingress from a different namespace
-Cross-namespace traffic needs a `namespaceSelector`. Two equivalent options: extend `allow-http` with a second `from`, or add a dedicated policy.
+This client lives in **another namespace**, so it is the one case where you start a **new** pod (in terminal 2, exit or leave the `prod-nginx` debug pod first). Cross-namespace traffic needs a `namespaceSelector`. Two equivalent options: extend `allow-http` with a second `from`, or add a dedicated policy.
 ```
 kubectl apply -n prod-nginx -f - <<EOF
 apiVersion: networking.k8s.io/v1
