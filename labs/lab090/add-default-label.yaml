@@ -1,0 +1,21 @@
+# Mutating policy: add team=default to any Pod that lacks a team label.
+# +(team) is an "add if absent" anchor: it never overwrites an existing value.
+# The same mechanism can inject a default securityContext, add sidecars, etc.
+# This is what PSA cannot do.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-default-label
+spec:
+  rules:
+  - name: add-team-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          labels:
+            +(team): "default"

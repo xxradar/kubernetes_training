@@ -45,7 +45,7 @@
 - Events
 - Admission control (Kyverno / Gatekeeper)
 - Observability & metrics (metrics-server, Prometheus model, logs, Hubble)
-- lab 080, 083, 085, 100
+- lab 080, 083, 085, 090, 100
 
 
 

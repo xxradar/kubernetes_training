@@ -21,4 +21,5 @@
 * [Introduction to Helm - Lab080](labs/lab080/README.md) `Beginner`
 * [RBAC and ServiceAccounts (with FortiGate SDN connector) - Lab083](labs/lab083/README.md) `Beginner`
 * [Observability: events, logs, metrics, audit - Lab085](labs/lab085/README.md) `Beginner`
+* [Admission control with Kyverno - Lab090](labs/lab090/README.md) `Beginner`
 * [Troubleshooting - Lab100](labs/lab100/README.md) `Beginner`

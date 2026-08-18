@@ -1,0 +1,26 @@
+# Validating policy: require CPU + memory limits on every container (LAB072 rule,
+# now enforced centrally). Starts in Audit (records violations in a PolicyReport,
+# does not block). Patch failureAction to Enforce to reject at admission.
+# failureAction is per-rule in Kyverno 1.11+.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-limits
+spec:
+  rules:
+  - name: check-resource-limits
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      failureAction: Audit
+      message: "CPU and memory limits are required on every container."
+      pattern:
+        spec:
+          containers:
+          - resources:
+              limits:
+                memory: "?*"
+                cpu: "?*"
