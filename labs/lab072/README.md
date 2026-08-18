@@ -9,7 +9,7 @@ Every container can declare two numbers per resource:
   - **CPU is compressible**: over the limit the container is **throttled** (slowed down), not killed.
   - **memory is incompressible**: over the limit the container is **OOMKilled** and restarted.
 
-CPU is measured in cores / millicores (`500m` = half a core), memory in bytes (`Mi`, `Gi`). For a security engineer this is also a **containment control**: limits stop a runaway or compromised pod from starving its neighbours (a local DoS).
+CPU is measured in cores / millicores (`500m` = half a core), memory in bytes (`Mi`, `Gi`). This is also a **containment control**: limits stop a runaway or compromised pod from starving its neighbours (a local DoS).
 
 ```
 kubectl create ns resource-demo

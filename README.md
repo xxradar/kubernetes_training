@@ -4,7 +4,6 @@
 * [Setting up a K8s Cluster - Lab000](labs/lab000/README.md) `Beginner`
 * [Learning about pods - Lab010](labs/lab010/README.md) `Beginner`
 * [Learning about deployments and replicasets - Lab020](labs/lab020/README.md) `Beginner`
-* [Resource requests and limits (CPU, memory, QoS) - Lab025](labs/lab025/README.md) `Advanced · Optional`
 * [Services - ClusterIP - Lab030](labs/lab030/README.md) `Beginner`
 * [Health probes (readiness, liveness, startup) - Lab032](labs/lab032/README.md) `Beginner`
 * [Accessing kubernetes services when things get tough - Lab035](labs/lab035/README.md) `Beginner`

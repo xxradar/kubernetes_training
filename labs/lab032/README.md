@@ -2,7 +2,7 @@
 
 > Continues from LAB030: the `prod-nginx` namespace, the `nginx-deployment`, and the `my-nginx-clusterip` service already exist.
 
-Kubernetes uses three probes to decide the state of a container. For a network engineer the key one is the **readiness** probe, because it controls whether a pod is in the Service Endpoints, and therefore whether it receives traffic.
+Kubernetes uses three probes to decide the state of a container. The key one here is the **readiness** probe, because it controls whether a pod is in the Service Endpoints, and therefore whether it receives traffic.
 
 ## The three probes
 - **readiness**: is the pod ready to serve? While it fails, the pod is taken **out of the Service's ready endpoints** (its endpoint stays listed but flips to `ready=false`), so it gets **no traffic**. The container is **not** restarted. This is the traffic control.

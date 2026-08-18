@@ -69,7 +69,7 @@ kubectl get po -n prod-nginx -o wide
 NAME        READY   STATUS    RESTARTS   AGE    IP              NODE          NOMINATED NODE   READINESS GATES
 nginx-pod   1/1     Running   0          136m   10.10.162.130   kind-worker   <none>           <none>
 ```
-For a network engineer the two interesting columns are `IP` (the pod's own address, from the pod CIDR) and `NODE` (which node it landed on).
+The two interesting columns are `IP` (the pod's own address, from the pod CIDR) and `NODE` (which node it landed on).
 
 ## Pod labels with --show-labels
 Add `--show-labels` to see the labels attached to the pod:
@@ -110,4 +110,4 @@ Work through these yourself, the interesting part is figuring out the "why".
 * Start the ubuntu pod again. What do you see, and what does that tell you about a pod's filesystem?
 * Now run the throwaway pod in a **different** namespace (for example `default`) and `curl` the same nginx pod IP over in `lab01-exercise`. Does it still work? What does that tell you about whether a namespace is a network boundary by default?
 
-> Takeaway: pod IPs are ephemeral and a pod's filesystem resets on restart, so **Services** (next labs) give you a stable virtual IP in front of changing pods. And a namespace isolates names, not traffic, cross-namespace pod-to-pod reachability is open by default until you add a **NetworkPolicy** (LAB070 and LAB080).
+> Takeaway: pod IPs are ephemeral and a pod's filesystem resets on restart, so **Services** (next labs) give you a stable virtual IP in front of changing pods. And a namespace isolates names, not traffic, cross-namespace pod-to-pod reachability is open by default until you add a **NetworkPolicy** (LAB075).
