@@ -128,7 +128,7 @@ cat ca.crt
 ```
 On the FortiGate you then create a **Kubernetes SDN connector** (Security Fabric > External Connectors) and fill in that IP/port, secret token, and CA. From that point the firewall sees your pods and services by label. Fortinet documents this same flow for FortiOS 6.4 through 7.6.
 
-> The old habit of reading the token from `kubectl get sa <name> -o jsonpath='{.secrets[0].name}'` no longer works on Kubernetes 1.24+, because the SA has no auto-mounted Secret. Reference the Secret you created by name instead, as above.
+> **The ServiceAccount no longer gets an automatically generated token Secret.** The old habit of retrieving the token Secret from `kubectl get sa <name> -o jsonpath='{.secrets[0].name}'` no longer works on Kubernetes 1.24+, because Kubernetes no longer automatically creates a Secret-backed token for every ServiceAccount. For an external system such as FortiGate that requires a long-lived token, explicitly create a `kubernetes.io/service-account-token` Secret associated with the ServiceAccount and reference that Secret by name, as shown above.
 
 ## Explore it yourself
 * Try an action outside the grant: `kubectl auth can-i create services --as=system:serviceaccount:default:fortigateconnector`. Why should a firewall connector never have write verbs?
