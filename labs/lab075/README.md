@@ -325,7 +325,7 @@ curl my-nginx-clusterip.prod-nginx
 **Expected:** blocked, blocked, then allowed. Both the **namespace** label and the **pod** label must match, precise, least-privilege selection.
 
 ## Advanced: Cilium cluster-wide policy (quarantine)
-Standard NetworkPolicy is namespaced. Cilium adds a **cluster-wide** CRD, useful for a security response like quarantining a compromised pod anywhere in the cluster. This one denies all egress to the outside `world` for any pod labelled `quarantine=true`:
+Standard NetworkPolicy is namespaced. Cilium adds a **cluster-wide** CRD, useful for a security response like quarantining a compromised pod anywhere in the cluster. This one denies all egress to the outside `world` for any pod labelled `quarantine=true`. Apply it in **terminal 1**:
 ```
 kubectl apply -f - <<EOF
 apiVersion: "cilium.io/v2"
@@ -341,7 +341,7 @@ spec:
     - "world"
 EOF
 ```
-Start a client and confirm external access works first:
+In **terminal 2**, start a client and confirm external access works first:
 ```
 kubectl run -it --rm -n myhackns --image xxradar/hackon --env="POD=$POD" debug
 ```
@@ -349,11 +349,11 @@ kubectl run -it --rm -n myhackns --image xxradar/hackon --env="POD=$POD" debug
 nslookup www.radarhack.com
 curl https://www.radarhack.com
 ```
-In another terminal, quarantine the running pod:
+In **terminal 1**, quarantine the running pod:
 ```
 kubectl label po/debug -n myhackns  quarantine=true
 ```
-Return to the pod and try again:
+Back in the pod (**terminal 2**), try again:
 ```
 curl https://www.radarhack.com
 curl https://www.radarhack.com
